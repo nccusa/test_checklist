@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>氣墊樂園｜預約入場</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+:root{
+  --ink:#221F4B; --ink-2:#5B5880; --line:#DCDAEA; --paper:#F3F2FA; --card:#FFFFFF;
+  --sun:#FFD447; --sun-deep:#E8B400; --go:#2F9E6E; --stop:#F0583C; --stop-bg:#FFECE7;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.6}
+main{max-width:560px;margin:0 auto;padding:28px 18px 80px}
+.hero{padding:6px 0 18px}
+.hero h1{margin:0;font-size:40px;font-weight:900;letter-spacing:.02em;line-height:1.15}
+.hero h1 span{display:block;font-size:16px;font-weight:500;color:var(--ink-2);letter-spacing:.08em;margin-top:6px}
+.notice{background:#FFF6D1;border-left:4px solid var(--sun-deep);padding:10px 14px;border-radius:8px;margin:12px 0;font-size:14px}
+.card{background:var(--card);border-radius:var(--r);padding:20px;margin-top:14px;border:1px solid var(--line)}
+.q{font-weight:700;font-size:17px;margin:0 0 12px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg label{position:relative;display:block}
+.seg input{position:absolute;opacity:0;inset:0}
+.seg span{display:block;text-align:center;padding:12px 6px;border:2px solid var(--line);border-radius:10px;font-weight:700;cursor:pointer;background:#fff;transition:.15s}
+.seg input:checked+span{border-color:var(--ink);background:var(--ink);color:#fff}
+.seg input:focus-visible+span{outline:3px solid var(--sun)}
+.field{margin-top:14px}
+.field label{display:block;font-weight:700;font-size:14px;margin-bottom:6px}
+.field input{width:100%;font:inherit;font-size:17px;padding:12px 14px;border:2px solid var(--line);border-radius:10px;background:#fff}
+.field input:focus{outline:none;border-color:var(--ink)}
+.hint{font-size:13px;color:var(--ink-2);margin-top:6px}
+.days{display:flex;gap:8px;margin-bottom:12px}
+.days button{flex:1;font:inherit;font-weight:900;font-size:16px;padding:10px;border:2px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;color:var(--ink)}
+.days button.on{background:var(--sun);border-color:var(--sun-deep)}
+.days button small{display:block;font-size:12px;font-weight:500;color:var(--ink-2)}
+.slots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.slot{position:relative}
+.slot input{position:absolute;opacity:0;inset:0}
+.slot span{display:flex;flex-direction:column;padding:10px 12px;border:2px solid var(--line);border-radius:10px;cursor:pointer;background:#fff;transition:.15s;line-height:1.3}
+.slot b{font-size:17px;font-weight:700;letter-spacing:.02em}
+.slot small{font-size:12px;color:var(--ink-2);margin-top:3px}
+.slot input:checked+span{border-color:var(--sun-deep);background:var(--sun)}
+.slot input:focus-visible+span{outline:3px solid var(--ink)}
+.slot.full span{background:var(--paper);color:#9896B0;cursor:not-allowed;border-style:dashed}
+.slot.full small{color:var(--stop)}
+.slot.few small{color:var(--stop);font-weight:700}
+button.primary{width:100%;margin-top:18px;font:inherit;font-size:18px;font-weight:900;padding:15px;border:0;border-radius:12px;background:var(--ink);color:#fff;cursor:pointer;letter-spacing:.06em}
+button.primary:disabled{background:#B9B7CF;cursor:not-allowed}
+button.ghost{font:inherit;font-size:14px;padding:9px 14px;border:2px solid var(--line);border-radius:9px;background:#fff;cursor:pointer;color:var(--ink);font-weight:700}
+.err{background:var(--stop-bg);color:#9E2E17;padding:10px 14px;border-radius:9px;margin-top:12px;font-size:14px;display:none}
+.done{display:none;text-align:left}
+.ticket{background:var(--sun);border-radius:var(--r);padding:22px;margin-top:14px;border:2px dashed var(--sun-deep)}
+.ticket .t{font-size:13px;font-weight:700;color:#6B5300}
+.ticket .big{font-size:44px;font-weight:900;line-height:1.1;margin:4px 0 10px}
+.ticket .who{font-weight:700}
+.ticket p{margin:10px 0 0;font-size:14px}
+details{margin-top:28px}
+summary{cursor:pointer;font-weight:700;color:var(--ink-2)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.row input{flex:1;min-width:120px;font:inherit;font-size:15px;padding:10px 12px;border:2px solid var(--line);border-radius:9px}
+.result{margin-top:12px;font-size:15px}
+footer{margin-top:40px;font-size:12px;color:var(--ink-2);text-align:center}
+.closed{display:none;padding:26px;text-align:center;font-weight:700;font-size:18px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <h1 id="eventName">氣墊樂園<span id="eventDate">預約入場</span></h1>
+  </header>
+  <div class="notice" id="notice" style="display:none"></div>
+
+  <div class="card closed" id="closedBox">報名目前未開放</div>
+
+  <form id="form" novalidate>
+    <section class="card">
+      <p class="q">你的身分是</p>
+      <div class="seg">
+        <label><input type="radio" name="identity" value="student" required><span>校內學生</span></label>
+        <label><input type="radio" name="identity" value="staff"><span>教職員</span></label>
+        <label><input type="radio" name="identity" value="external"><span>校外人士</span></label>
+      </div>
+      <div class="field">
+        <label for="name">姓名</label>
+        <input id="name" autocomplete="name" required maxlength="40" placeholder="請填真實姓名">
+      </div>
+      <div class="field">
+        <label for="phone">手機號碼</label>
+        <input id="phone" type="tel" inputmode="numeric" autocomplete="tel" required maxlength="13" placeholder="例：0912345678">
+        <div class="hint">現場報到用手機號碼核對；同一支手機每天最多預約一場。</div>
+      </div>
+      <div class="field" id="studentField" style="display:none">
+        <label for="studentId">學號</label>
+        <input id="studentId" maxlength="20" placeholder="例：113405001">
+      </div>
+      <div class="field" id="staffField" style="display:none">
+        <label for="staffId">教職員編號</label>
+        <input id="staffId" maxlength="20" placeholder="例：A12345">
+      </div>
+    </section>
+
+    <section class="card">
+      <p class="q">選一個入場時段</p>
+      <div class="hint" style="margin:-6px 0 12px">每場 25 分鐘，每場上限 <span id="capText">65</span> 人。額滿的時段不能選；若要一群人一起入場，請確認剩餘名額夠用。</div>
+      <div class="days" id="days"></div>
+      <div class="slots" id="slots"></div>
+    </section>
+
+    <div class="err" id="err"></div>
+    <button class="primary" id="submit" type="submit">送出預約</button>
+  </form>
+
+  <section class="done" id="done">
+    <div class="ticket">
+      <div class="t">預約完成 ✓</div>
+      <div class="big" id="doneSlot">—</div>
+      <div class="who" id="doneWho">—</div>
+      <p>請在時段開始前 5 分鐘抵達，報到時告知工作人員你的姓名與手機號碼。<br><b>臨時不能來，請務必在下方取消預約</b>，把名額讓給其他人。</p>
+    </div>
+    <div style="margin-top:14px"><button class="ghost" onclick="location.reload()">再幫別人預約</button></div>
+  </section>
+
+  <details>
+    <summary>查詢／取消我的預約（不能來請先取消，讓名額給別人）</summary>
+    <div class="row">
+      <input id="qName" placeholder="姓名">
+      <input id="qId" placeholder="手機號碼" inputmode="numeric">
+      <button class="ghost" type="button" id="qBtn">查詢</button>
+    </div>
+    <div class="result" id="qResult"></div>
+  </details>
+
+  <footer>國立政治大學學生會</footer>
+</main>
+
+<script>
+const sb = supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
+const $ = s => document.querySelector(s);
+const IDENTITY = { student:'校內學生', staff:'教職員', external:'校外人士' };
+let state = null, day = null;
+
+document.querySelectorAll('input[name=identity]').forEach(r => r.addEventListener('change', () => {
+  $('#studentField').style.display = r.value==='student' ? '' : 'none';
+  $('#staffField').style.display   = r.value==='staff'   ? '' : 'none';
+}));
+
+async function load(){
+  const { data, error } = await sb.rpc('get_public_state');
+  if (error) { showErr('讀取時段失敗，請重新整理。'); console.error(error); return; }
+  state = data;
+  const s = data.settings;
+  $('#eventName').firstChild.textContent = s.event_name;
+  $('#eventDate').textContent = s.days.join('、') + ' 預約入場';
+  $('#capText').textContent = s.capacity;
+  if (!day || !s.days.includes(day)) day = s.days[0];
+  document.title = s.event_name + '｜預約入場';
+  if (s.notice) { $('#notice').style.display='block'; $('#notice').textContent = s.notice; }
+  if (!s.is_open) { $('#form').style.display='none'; $('#closedBox').style.display='block'; return; }
+  renderSlots();
+}
+
+function renderSlots(){
+  const s = state.settings, counts = state.counts;
+  const cur = document.querySelector('input[name=slot]:checked')?.value;
+  $('#days').innerHTML = s.days.map(d => {
+    const left = s.slots.reduce((a,t) => a + Math.max(0, s.capacity - (counts[d+'|'+t]||0)), 0);
+    return `<button type="button" class="${d===day?'on':''}" data-d="${d}">${d}<small>剩 ${left} 位</small></button>`;
+  }).join('');
+  document.querySelectorAll('#days button').forEach(b => b.onclick = () => { day = b.dataset.d; renderSlots(); });
+  $('#slots').innerHTML = s.slots.map(slot => {
+    const used = counts[day+'|'+slot] || 0, left = Math.max(0, s.capacity - used);
+    const full = left === 0, few = !full && left <= 10;
+    return `<label class="slot ${full?'full':''} ${few?'few':''}">
+      <input type="radio" name="slot" value="${slot}" ${full?'disabled':''} ${cur===slot?'checked':''}>
+      <span><b>${slot}</b><small>${full?'已額滿':'剩 '+left+' 位'}</small></span></label>`;
+  }).join('');
+}
+
+function showErr(msg){ const e=$('#err'); e.textContent=msg; e.style.display='block'; e.scrollIntoView({block:'center'}); }
+function hideErr(){ $('#err').style.display='none'; }
+
+$('#form').addEventListener('submit', async ev => {
+  ev.preventDefault(); hideErr();
+  const identity = document.querySelector('input[name=identity]:checked')?.value;
+  const name = $('#name').value.trim(), phone = $('#phone').value.replace(/\D/g,'');
+  const studentId = $('#studentId').value.trim(), staffId = $('#staffId').value.trim();
+  const slot = document.querySelector('input[name=slot]:checked')?.value;
+  if (!identity) return showErr('請先選擇身分。');
+  if (!name) return showErr('請填寫姓名。');
+  if (!/^09\d{8}$/.test(phone)) return showErr('手機號碼格式不對，請填 09 開頭共 10 碼。');
+  if (identity==='student' && !studentId) return showErr('請填寫學號。');
+  if (identity==='staff' && !staffId) return showErr('請填寫教職員編號。');
+  if (!slot) return showErr('請選擇一個時段。');
+  const btn=$('#submit'); btn.disabled=true; btn.textContent='送出中…';
+  const { data, error } = await sb.rpc('book_slot', { p_identity:identity, p_name:name, p_phone:phone,
+    p_student_id:studentId, p_staff_id:staffId, p_day:day, p_slot:slot });
+  btn.disabled=false; btn.textContent='送出預約';
+  if (error) { console.error(error); return showErr('送出失敗，請稍後再試。'); }
+  if (!data.ok) {
+    const m = {
+      full: '這個時段剛剛額滿了，請改選其他時段。',
+      duplicate: `這支手機在 ${data.booking?.day} 已經預約過（${data.booking?.name}，${data.booking?.slot}）。每天最多一場；若要換時段，請先在下方取消原預約。`,
+      closed: '報名已關閉。', bad_slot: '時段不存在，請重新整理頁面。', missing: '資料不完整。', bad_identity:'身分不正確。',
+      bad_phone:'手機號碼格式不對。', missing_student_id:'請填寫學號。', missing_staff_id:'請填寫教職員編號。'
+    };
+    await load(); return showErr(m[data.error] || '發生錯誤。');
+  }
+  $('#form').style.display='none';
+  $('#done').style.display='block';
+  $('#doneSlot').textContent = data.booking.day + ' ' + data.booking.slot;
+  $('#doneWho').textContent = `${data.booking.name}｜${IDENTITY[data.booking.identity]}｜${data.booking.phone}`;
+  $('#qName').value = data.booking.name; $('#qId').value = data.booking.phone;
+  window.scrollTo({top:0});
+});
+
+$('#qBtn').addEventListener('click', async () => {
+  const name=$('#qName').value.trim(), id=$('#qId').value.replace(/\D/g,''), out=$('#qResult');
+  if(!name||!id){ out.textContent='請填姓名和手機號碼。'; return; }
+  const { data, error } = await sb.rpc('lookup_booking', { p_name:name, p_phone:id });
+  if (error || !Array.isArray(data) || !data.length) { out.textContent='找不到符合的預約，請確認姓名與手機號碼和預約時填的一致。'; return; }
+  const ST = { booked:'尚未報到', arrived:'已報到', late:'已報到（遲到）', absent:'缺席' };
+  out.innerHTML = data.map(b => `<div style="margin-top:6px"><b>${b.day} ${b.slot}</b>　${b.name}（${IDENTITY[b.identity]}），${ST[b.status]}。`
+    + (b.status==='booked' ? ` <button class="ghost cancelBtn" data-day="${b.day}" style="margin-left:6px">取消這天</button>` : '') + '</div>').join('');
+  document.querySelectorAll('.cancelBtn').forEach(btn => btn.addEventListener('click', async () => {
+    if(!confirm(`確定取消 ${btn.dataset.day} 的預約？取消後名額會釋出。`)) return;
+    const r = await sb.rpc('cancel_booking', { p_name:name, p_phone:id, p_day:btn.dataset.day });
+    out.textContent = r.data?.ok ? `已取消 ${btn.dataset.day} 的預約，你可以重新預約其他時段。` : '取消失敗（可能已報到或報名已關閉）。';
+    load();
+  }));
+});
+
+load();
+setInterval(() => { if (state?.settings?.is_open && $('#form').style.display!=='none') load(); }, 20000);
+</script>
+</body>
+</html>

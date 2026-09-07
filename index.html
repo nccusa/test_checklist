@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
+<script src="config.js?v=3"></script>
 <style>
 :root{
   --ink:#2F4F86; --ink-deep:#24406E; --text:#2B3A55; --muted:#6B7A99; --line:#D7E3DC;
@@ -196,7 +196,10 @@ const $ = s => document.querySelector(s);
 const IDENTITY = { student:'校內學生', staff:'教職員', external:'校外人士' };
 let state = null, day = null;
 
-/* 票價、須知（來自 config.js） */
+/* 票價、須知（來自 config.js；若讀到舊版 config 也不會壞掉） */
+APP_CONFIG.PRICES = APP_CONFIG.PRICES || { student:'', staff:'', external:'' };
+APP_CONFIG.WALKIN = APP_CONFIG.WALKIN ?? 15;
+APP_CONFIG.TERMS  = APP_CONFIG.TERMS  || ['（活動須知尚未設定）'];
 $('#pStudent').textContent = APP_CONFIG.PRICES.student;
 $('#pStaff').textContent = APP_CONFIG.PRICES.staff;
 $('#pExternal').textContent = APP_CONFIG.PRICES.external;

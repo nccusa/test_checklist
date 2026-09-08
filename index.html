@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=6"></script>
+<script src="config.js?v=7"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 /* Google Analytics 4 */
@@ -153,11 +153,6 @@ footer{margin-top:40px;font-size:12px;color:var(--muted);text-align:center}
         <input id="phone2" type="tel" inputmode="numeric" required maxlength="13" placeholder="確認沒有打錯" onpaste="return false">
         <div class="hint" id="phone2Hint"></div>
       </div>
-      <div class="field">
-        <label for="email">Email <em>（預約確認信與活動前提醒會寄到這裡）</em></label>
-        <input id="email" type="email" inputmode="email" autocomplete="email" required maxlength="80" placeholder="例：name@g.nccu.edu.tw">
-        <div class="hint" id="emailHint"></div>
-      </div>
       <div class="field" id="studentField" style="display:none">
         <label for="studentId">學號</label>
         <input id="studentId" maxlength="20" placeholder="例：113405001">
@@ -192,7 +187,6 @@ footer{margin-top:40px;font-size:12px;color:var(--muted);text-align:center}
       <div class="who" id="doneWho">—</div>
       <p>請在時段開始前 5 分鐘抵達報到；<b>遲到者名額將不保留，並釋出給現場名額。</b></p>
       <p><b>臨時不能來，請務必在下方取消預約</b>，把名額讓給其他人。</p>
-      <p id="mailNote" style="font-size:13px;color:#7A5E00">✉ 預約確認信會在幾分鐘內寄到 <b id="doneMail"></b>，活動前一天也會再寄一封提醒。沒收到請檢查垃圾郵件。</p>
     </div>
     <div class="shot">📸 請先儲存此預約憑證，並於報到時出示憑證及身分證明文件（身分證、健保卡等；校內學生需出示學生證）。</div>
     <div class="row" style="margin-top:12px">
@@ -260,12 +254,6 @@ function checkPhone(){
 }
 $('#phone').addEventListener('input', checkPhone);
 $('#phone2').addEventListener('input', checkPhone);
-const emailOk = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
-$('#email').addEventListener('input', () => {
-  const v=$('#email').value.trim(), ok=emailOk(v);
-  $('#email').classList.toggle('bad', v.length>0 && !ok); $('#email').classList.toggle('good', ok);
-  $('#emailHint').className='hint'+(v.length>0&&!ok?' err':''); $('#emailHint').textContent = v.length>0&&!ok ? 'Email 格式不對，請檢查有沒有 @ 和 .' : '';
-});
 
 async function load(){
   const { data, error } = await sb.rpc('get_public_state');
@@ -307,20 +295,18 @@ $('#form').addEventListener('submit', async ev => {
   ev.preventDefault(); hideErr();
   const identity = document.querySelector('input[name=identity]:checked')?.value;
   const name = $('#name').value.trim(), phone = digits($('#phone').value);
-  const email = $('#email').value.trim();
   const studentId = $('#studentId').value.trim(), staffId = $('#staffId').value.trim();
   const slot = document.querySelector('input[name=slot]:checked')?.value;
   if (!identity) return showErr('請先選擇身分。');
   if (!name) return showErr('請填寫姓名。');
   if (!/^09\d{8}$/.test(phone)) return showErr('手機號碼格式不對，請填 09 開頭共 10 碼。');
   if (!checkPhone()) return showErr('兩次輸入的手機號碼不一樣，請再確認。');
-  if (!emailOk(email)) return showErr('Email 格式不對，請再確認。');
   if (identity==='student' && !studentId) return showErr('請填寫學號。');
   if (identity==='staff' && !staffId) return showErr('請填寫教職員編號。');
   if (!slot) return showErr('請選擇一個時段。');
   if (!$('#agree').checked) return showErr('請先閱讀並勾選同意活動須知與免責聲明。');
   const btn=$('#submit'); btn.disabled=true; btn.textContent='送出中…';
-  const { data, error } = await sb.rpc('book_slot', { p_identity:identity, p_name:name, p_phone:phone, p_email:email,
+  const { data, error } = await sb.rpc('book_slot', { p_identity:identity, p_name:name, p_phone:phone, p_email:'',
     p_student_id:studentId, p_staff_id:staffId, p_day:day, p_slot:slot });
   btn.disabled=false; btn.textContent='同意並送出預約';
   if (error) { console.error(error); return showErr('送出失敗，請稍後再試。'); }
@@ -339,7 +325,6 @@ $('#form').addEventListener('submit', async ev => {
   $('#form').style.display='none';
   $('#done').style.display='block';
   $('#doneSlot').textContent = data.booking.day + ' ' + data.booking.slot;
-  $('#doneMail').textContent = data.booking.email || '';
   $('#doneWho').textContent = `${data.booking.name}｜${IDENTITY[data.booking.identity]} ${APP_CONFIG.PRICES[data.booking.identity]}｜${data.booking.phone}`;
   $('#qName').value = data.booking.name; $('#qId').value = data.booking.phone; $('#lookup').open = true;
   window.scrollTo({top:0});

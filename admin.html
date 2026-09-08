@@ -14,7 +14,7 @@
 <meta name="robots" content="noindex">
 <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=5"></script>
+<script src="config.js?v=6"></script>
 <style>
 :root{--ink:#221F4B;--ink-2:#5B5880;--line:#DCDAEA;--paper:#F3F2FA;--card:#fff;--sun:#FFD447;--sun-deep:#E8B400;--go:#2F9E6E;--go-bg:#E3F5EC;--late:#D97A00;--late-bg:#FFF0D6;--stop:#F0583C;--stop-bg:#FFECE7}
 *{box-sizing:border-box}
@@ -130,6 +130,7 @@ tr.arrived td{background:var(--go-bg)} tr.late td{background:var(--late-bg)} tr.
   <div class="f"><label>姓名</label><input id="eName"></div>
   <div class="f"><label>身分</label><select id="eIdentity"><option value="student">校內學生</option><option value="staff">教職員</option><option value="external">校外人士</option></select></div>
   <div class="f"><label>手機號碼</label><input id="ePhone" inputmode="numeric"></div>
+  <div class="f"><label>Email</label><input id="eEmail" type="email"></div>
   <div class="f" id="eStudentF"><label>學號</label><input id="eStudentId"></div>
   <div class="f" id="eStaffF"><label>教職員編號</label><input id="eStaffId"></div>
   <div class="f"><label>日期</label><select id="eDay"></select></div>
@@ -248,11 +249,12 @@ function render(){
   $('#count').textContent = `${list.length} 人`;
   if (!list.length) { $('#tableWrap').innerHTML = `<div class="empty">這個時段還沒有人預約</div>`; return; }
   $('#tableWrap').innerHTML = `<table><thead><tr>
-    <th>姓名</th><th>手機</th><th class="hide">學號／編號</th>${tab==='ALL'?'<th>時段</th>':''}<th>狀態</th><th class="hide">備註</th><th></th>
+    <th>姓名</th><th>手機</th><th class="hide">學號／編號</th><th class="hide">Email</th>${tab==='ALL'?'<th>時段</th>':''}<th>狀態</th><th class="hide">備註</th><th></th>
   </tr></thead><tbody>${list.map(r => `<tr class="${r.status}">
     <td><span class="who">${esc(r.name)}</span> <span class="tag">${IDENTITY[r.identity]}</span></td>
     <td class="idn">${esc(r.phone)}</td>
     <td class="idn hide">${esc(idOf(r))}</td>
+    <td class="hide tag">${esc(r.email||'')}${r.confirm_sent_at?' ✓':''}</td>
     ${tab==='ALL'?`<td>${r.slot}</td>`:''}
     <td>${statusSeg(r)}</td>
     <td class="hide tag">${esc(r.note||'')}</td>
@@ -308,6 +310,7 @@ function openEdit(id){
   $('#eName').value = editing?.name || '';
   $('#eIdentity').value = editing?.identity || 'student';
   $('#ePhone').value = editing?.phone || '';
+  $('#eEmail').value = editing?.email || '';
   $('#eStudentId').value = editing?.student_id || '';
   $('#eStaffId').value = editing?.staff_id || '';
   $('#eDay').value = editing?.day || dayTab;
@@ -324,7 +327,7 @@ $('#eIdentity').addEventListener('change', syncIdFields);
 $('#addBtn').addEventListener('click', () => openEdit(null));
 $('#saveBtn').addEventListener('click', async () => {
   const identity = $('#eIdentity').value;
-  const rec = { name:$('#eName').value.trim(), identity, phone:$('#ePhone').value.replace(/\D/g,''),
+  const rec = { name:$('#eName').value.trim(), identity, phone:$('#ePhone').value.replace(/\D/g,''), email:$('#eEmail').value.trim().toLowerCase(),
     student_id: identity==='student' ? $('#eStudentId').value.trim() : '',
     staff_id:   identity==='staff'   ? $('#eStaffId').value.trim()   : '',
     day:$('#eDay').value, slot:$('#eSlot').value, status:$('#eStatus').value, note:$('#eNote').value.trim(), updated_at:new Date().toISOString() };
@@ -361,8 +364,8 @@ $('#saveSetBtn').addEventListener('click', async () => {
 
 /* ---------- 匯出 ---------- */
 $('#csvBtn').addEventListener('click', () => {
-  const head = ['日期','時段','姓名','身分','手機','學號','教職員編號','狀態','報到時間','備註','預約時間'];
-  const body = [...rows].sort((a,b)=>(a.day+a.slot).localeCompare(b.day+b.slot)).map(r => [r.day, r.slot, r.name, IDENTITY[r.identity], r.phone, r.student_id, r.staff_id, STATUS[r.status],
+  const head = ['日期','時段','姓名','身分','手機','Email','學號','教職員編號','狀態','報到時間','備註','預約時間'];
+  const body = [...rows].sort((a,b)=>(a.day+a.slot).localeCompare(b.day+b.slot)).map(r => [r.day, r.slot, r.name, IDENTITY[r.identity], r.phone, r.email||'', r.student_id, r.staff_id, STATUS[r.status],
     r.checked_in_at ? new Date(r.checked_in_at).toLocaleString('zh-TW') : '', r.note, new Date(r.created_at).toLocaleString('zh-TW')]);
   const csv = '\uFEFF' + [head, ...body].map(l => l.map(v => `"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
